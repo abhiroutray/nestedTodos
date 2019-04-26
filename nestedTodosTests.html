@@ -1,0 +1,116 @@
+<script src="simpletest/simpletest.js"></script>
+<script src="nestedTodos.js"></script>
+<script>
+
+tests({
+  
+  'It should be able to generate an id for a new todo.': function() {
+    var UUID = util.generateId();
+    eq(typeof UUID, 'string');
+    eq(UUID.length, 36);
+  },
+
+  'It should be able to add a new parent todo.': function() {
+    todoList.addTodo('parent todo 1');
+    var todo = todoList.todos[0];
+
+    eq(todoList.todos.length, 1);
+    eq(todo.todoText, 'parent todo 1');
+    eq(todo.completed, false);
+    eq(todo.childTodos.length, 0);
+  },
+  
+  'It should be able to find any parent todo given its id.': function() {
+    var todo = todoList.todos[0];
+    var id = todo.id;
+
+    eq(todoList.findTodoById(id), todo);
+  },
+  
+  'It should be able to add a new child todo to a parent todo.': function() {
+    var parentTodo = todoList.todos[0];
+    var parentId = parentTodo.id;
+
+    todoList.addTodo('child todo 1', parentId);
+    var childTodo = parentTodo.childTodos[0];
+
+    eq(parentTodo.childTodos.length, 1);
+    eq(childTodo.todoText, 'child todo 1');
+    eq(childTodo.completed, false);
+    eq(childTodo.childTodos.length, 0);
+  },
+  
+  'It should be able to find any child todo given its id.': function() {
+    var childTodo = todoList.todos[0].childTodos[0];
+    var id = childTodo.id;
+
+    eq(todoList.findTodoById(id), childTodo);
+  },
+  
+  'It should support any level of nested todos.': function() {
+    var childTodo = todoList.todos[0].childTodos[0];
+
+    todoList.addTodo('grandchild todo 1', childTodo.id);
+    var grandchildTodo = childTodo.childTodos[0];
+
+    eq(childTodo.childTodos.length, 1);
+    eq(grandchildTodo.todoText, 'grandchild todo 1');
+    eq(grandchildTodo.completed, false);
+    eq(grandchildTodo.childTodos.length, 0);
+  },
+
+  'It should be able to edit the text of a parent todo.': function() {
+    var parentTodo = todoList.todos[0];
+    var childTodo = parentTodo.childTodos[0];
+    
+    todoList.editTodo('parent item 1 has been edited', parentTodo.id);
+    eq(parentTodo.todoText, 'parent item 1 has been edited');
+
+    todoList.editTodo('child item 1 has been edited', childTodo.id);
+    eq(childTodo.todoText, 'child item 1 has been edited');
+  },
+
+  'It should be able to toggle the completed property of a todo.': function() {
+    var grandchildTodo = todoList.todos[0].childTodos[0].childTodos[0];
+    
+    todoList.toggleCompleted(grandchildTodo.id);
+
+    eq(grandchildTodo.completed, true);
+  },
+
+  'It should toggle the completed property of all child todos when their corresponding parent todo is toggled.': function() {
+    var todo = todoList.todos[0];
+    var childTodo = todo.childTodos[0];
+    var grandchildTodo = childTodo.childTodos[0];
+
+    todoList.toggleCompleted(todo.id);
+    
+    eq(childTodo.completed, true);
+    eq(grandchildTodo.completed, true);
+  },
+
+  'It should be able to delete a todo.': function() {
+    var childTodo = todoList.todos[0].childTodos[0];
+    var grandchildTodo = childTodo.childTodos[0];
+    var grandchildTodoId = grandchildTodo.id;
+    
+    todoList.deleteTodo(grandchildTodo.id);
+
+    eq(childTodo.childTodos.length, 0);
+    eq(todoList.findTodoById(grandchildTodoId), undefined);
+  },
+
+  'It should delete all the child todos when their corresponding parent is deleted.': function() {
+    var parentTodo = todoList.todos[0];
+    var childTodo = parentTodo.childTodos[0];
+    var childTodoId = childTodo.id;
+
+    todoList.deleteTodo(parentTodo.id);
+
+    eq(todoList.todos.length, 0);
+    eq(todoList.findTodoById(childTodoId), undefined);
+  }
+
+});
+
+</script>
